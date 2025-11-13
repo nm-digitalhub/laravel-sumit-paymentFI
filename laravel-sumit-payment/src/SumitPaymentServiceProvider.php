@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Sumit\LaravelPayment\Services\PaymentService;
 use Sumit\LaravelPayment\Services\ApiService;
 use Sumit\LaravelPayment\Services\TokenService;
+use Sumit\LaravelPayment\Filament\SumitPaymentPanelProvider;
 
 class SumitPaymentServiceProvider extends ServiceProvider
 {
@@ -49,6 +50,11 @@ class SumitPaymentServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register Filament Panel Provider
+        if (class_exists(\Filament\Panel::class)) {
+            $this->app->register(SumitPaymentPanelProvider::class);
+        }
+
         // Publish configuration
         $this->publishes([
             __DIR__.'/../config/sumit-payment.php' => config_path('sumit-payment.php'),

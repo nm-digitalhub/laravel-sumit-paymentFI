@@ -8,6 +8,7 @@ use NmDigitalHub\LaravelOfficeGuy\Services\PaymentService;
 use NmDigitalHub\LaravelOfficeGuy\Services\TokenService;
 use NmDigitalHub\LaravelOfficeGuy\Services\StockService;
 use NmDigitalHub\LaravelOfficeGuy\Services\SubscriptionService;
+use NmDigitalHub\LaravelOfficeGuy\Filament\OfficeGuyPanelProvider;
 
 class OfficeGuyServiceProvider extends ServiceProvider
 {
@@ -71,6 +72,11 @@ class OfficeGuyServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Register Filament Panel Provider
+        if (class_exists(\Filament\Panel::class)) {
+            $this->app->register(OfficeGuyPanelProvider::class);
+        }
+
         // Publish config
         $this->publishes([
             __DIR__ . '/../config/officeguy.php' => config_path('officeguy.php'),

@@ -53,6 +53,45 @@ This will create three tables:
 - `sumit_transactions` - Stores transaction history
 - `sumit_customers` - Stores customer information
 
+Additionally, if using Filament admin panel, the settings table will be created automatically.
+
+## Filament Admin Panel (Optional)
+
+This package includes a Filament v4 admin panel for managing payments, tokens, customers, and settings through a user-friendly interface.
+
+### Enable Filament Admin Panel
+
+The admin panel is automatically enabled when Filament is installed in your application. If you haven't installed Filament yet:
+
+```bash
+composer require filament/filament:"^4.1"
+php artisan filament:install --panels
+```
+
+### Access the Admin Panel
+
+Once Filament is installed, you can access the SUMIT Payment admin panel at:
+
+```
+https://your-domain.com/admin/sumit-payment
+```
+
+The admin panel provides:
+- **Transactions**: View, search, and filter all payment transactions
+- **Payment Tokens**: Manage saved payment tokens
+- **Customers**: View and manage customer information
+- **Settings**: Configure API credentials and payment settings through a user-friendly interface
+
+### Settings Management
+
+The Settings page allows you to manage all payment configuration through the admin panel instead of editing `.env` files:
+
+1. Navigate to Settings in the admin panel
+2. Update API credentials, environment, and other settings
+3. Click Save
+
+Settings are stored in the database using Spatie Laravel Settings and override environment variables.
+
 ### Step 5: (Optional) Publish Views
 
 If you want to customize the payment forms:
