@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Sumit\LaravelPayment\Controllers\PaymentController;
 use Sumit\LaravelPayment\Controllers\TokenController;
+use Sumit\LaravelPayment\Controllers\WebhookController;
 
 // Get route configuration
 $prefix = config('sumit-payment.routes.prefix', 'sumit');
@@ -18,6 +19,11 @@ Route::prefix($prefix)->middleware($middleware)->group(function () {
     
     Route::get('/payment/{transactionId}', [PaymentController::class, 'getTransaction'])
         ->name('sumit.payment.show');
+
+    // Webhook routes (no auth middleware - external service)
+    Route::post('/webhook', [WebhookController::class, 'handle'])
+        ->name('sumit.webhook.handle')
+        ->withoutMiddleware('web');
 
     // Token management routes (requires authentication)
     Route::middleware(['auth'])->group(function () {

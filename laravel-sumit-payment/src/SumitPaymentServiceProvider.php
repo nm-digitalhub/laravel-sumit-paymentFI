@@ -29,6 +29,10 @@ class SumitPaymentServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(TokenService::class, function ($app) {
+            return new TokenService();
+        });
+
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService(
                 $app->make(ApiService::class),
@@ -36,8 +40,17 @@ class SumitPaymentServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->singleton(TokenService::class, function ($app) {
-            return new TokenService();
+        $this->app->singleton(\Sumit\LaravelPayment\Services\RefundService::class, function ($app) {
+            return new \Sumit\LaravelPayment\Services\RefundService(
+                $app->make(ApiService::class)
+            );
+        });
+
+        $this->app->singleton(\Sumit\LaravelPayment\Services\RecurringBillingService::class, function ($app) {
+            return new \Sumit\LaravelPayment\Services\RecurringBillingService(
+                $app->make(PaymentService::class),
+                $app->make(TokenService::class)
+            );
         });
 
         // Alias for facade
@@ -83,6 +96,8 @@ class SumitPaymentServiceProvider extends ServiceProvider
             ApiService::class,
             PaymentService::class,
             TokenService::class,
+            \Sumit\LaravelPayment\Services\RefundService::class,
+            \Sumit\LaravelPayment\Services\RecurringBillingService::class,
             'sumit-payment',
         ];
     }

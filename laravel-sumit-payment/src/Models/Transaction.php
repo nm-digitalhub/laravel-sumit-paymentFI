@@ -24,6 +24,7 @@ class Transaction extends Model
         'amount',
         'currency',
         'status',
+        'type',
         'payments_count',
         'description',
         'document_id',
@@ -33,6 +34,9 @@ class Transaction extends Model
         'last_four_digits',
         'is_subscription',
         'is_donation',
+        'payment_token_id',
+        'refund_amount',
+        'refund_status',
         'metadata',
         'error_message',
         'processed_at',
@@ -45,6 +49,7 @@ class Transaction extends Model
      */
     protected $casts = [
         'amount' => 'decimal:2',
+        'refund_amount' => 'decimal:2',
         'is_subscription' => 'boolean',
         'is_donation' => 'boolean',
         'metadata' => 'array',
@@ -159,5 +164,13 @@ class Transaction extends Model
     public function scopeSubscriptions($query)
     {
         return $query->where('is_subscription', true);
+    }
+
+    /**
+     * Get the payment token associated with the transaction.
+     */
+    public function paymentToken(): BelongsTo
+    {
+        return $this->belongsTo(PaymentToken::class);
     }
 }

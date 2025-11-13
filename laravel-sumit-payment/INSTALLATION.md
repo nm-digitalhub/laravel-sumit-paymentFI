@@ -554,8 +554,144 @@ Indexes are already created on:
 - `transaction_id`
 - `status`
 - `created_at`
+- `type`
+- `payment_token_id`
 
 For additional performance, consider archiving old transactions.
+
+## Filament Admin Panel Integration
+
+### Installation
+
+If you want to use the Filament admin panel integration:
+
+1. **Install Filament** (if not already installed):
+
+```bash
+composer require filament/filament:"^4.1"
+php artisan filament:install --panels
+```
+
+2. **Register the SUMIT Payment Plugin** in your Panel Provider (e.g., `app/Providers/Filament/AdminPanelProvider.php`):
+
+```php
+use Sumit\LaravelPayment\Filament\SumitPaymentPlugin;
+
+public function panel(Panel $panel): Panel
+{
+    return $panel
+        ->default()
+        ->id('admin')
+        ->path('admin')
+        ->plugins([
+            SumitPaymentPlugin::make(),
+        ]);
+}
+```
+
+3. **Run migrations** to create the settings table:
+
+```bash
+php artisan migrate
+```
+
+### Features Available
+
+Once installed, you'll have access to:
+
+1. **Payment Settings Page** - Manage all payment gateway configuration
+   - API credentials
+   - Environment settings
+   - Payment options
+   - Document settings
+   - VAT configuration
+
+2. **Transaction Resource** - View and manage all transactions
+   - Filter by status, type, date
+   - View transaction details
+   - Export data
+   - Track refunds
+
+3. **Payment Token Resource** - Manage saved payment methods
+   - View all saved cards
+   - Edit default payment methods
+   - Delete expired tokens
+
+### Accessing the Admin Panel
+
+After installation, access the admin panel at:
+```
+https://your-domain.com/admin
+```
+
+Navigate to **Payment Gateway** section to manage payments.
+
+For detailed Filament integration instructions, see [FILAMENT_INTEGRATION.md](FILAMENT_INTEGRATION.md).
+
+## Webhooks Configuration
+
+### Setting Up Webhooks
+
+1. **Configure Webhook URL** in your SUMIT merchant dashboard:
+   ```
+   https://your-domain.com/sumit/webhook
+   ```
+
+2. **Listen to Webhook Events** in your `EventServiceProvider`:
+
+```php
+use Sumit\LaravelPayment\Events\PaymentStatusChanged;
+use Sumit\LaravelPayment\Events\WebhookReceived;
+
+protected $listen = [
+    PaymentStatusChanged::class => [
+        \App\Listeners\UpdateOrderStatus::class,
+    ],
+    WebhookReceived::class => [
+        \App\Listeners\LogWebhookActivity::class,
+    ],
+];
+```
+
+3. **Create Event Listeners**:
+
+```bash
+php artisan make:listener UpdateOrderStatus
+php artisan make:listener LogWebhookActivity
+```
+
+### Testing Webhooks Locally
+
+Use a tool like ngrok for local webhook testing:
+
+```bash
+ngrok http 8000
+```
+
+Then use the ngrok URL in your SUMIT webhook configuration.
+
+## Scheduled Tasks for Subscriptions
+
+To automatically charge recurring subscriptions, add to `app/Console/Kernel.php`:
+
+```php
+use Sumit\LaravelPayment\Services\RecurringBillingService;
+
+protected function schedule(Schedule $schedule)
+{
+    // Process subscriptions daily at 2 AM
+    $schedule->call(function () {
+        app(RecurringBillingService::class)->processDueSubscriptions();
+    })->daily()->at('02:00');
+}
+```
+
+Make sure your scheduler is running:
+
+```bash
+# Add to crontab
+* * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
+```
 
 ## Next Steps
 
