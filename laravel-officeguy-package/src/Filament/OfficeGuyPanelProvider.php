@@ -9,6 +9,7 @@ use NmDigitalHub\LaravelOfficeGuy\Filament\Resources\PaymentResource;
 use NmDigitalHub\LaravelOfficeGuy\Filament\Resources\PaymentTokenResource;
 use NmDigitalHub\LaravelOfficeGuy\Filament\Resources\CustomerResource;
 use NmDigitalHub\LaravelOfficeGuy\Filament\Resources\StockSyncLogResource;
+use NmDigitalHub\LaravelOfficeGuy\Filament\Pages\ManageOfficeGuySettings;
 
 class OfficeGuyPanelProvider extends PanelProvider
 {
@@ -27,7 +28,9 @@ class OfficeGuyPanelProvider extends PanelProvider
                 CustomerResource::class,
                 StockSyncLogResource::class,
             ])
-            ->pages([])
+            ->pages([
+                ManageOfficeGuySettings::class,
+            ])
             ->widgets([]);
     }
 }

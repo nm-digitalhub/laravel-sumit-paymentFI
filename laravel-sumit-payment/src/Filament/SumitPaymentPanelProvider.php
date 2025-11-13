@@ -8,6 +8,7 @@ use Filament\Support\Colors\Color;
 use Sumit\LaravelPayment\Filament\Resources\TransactionResource;
 use Sumit\LaravelPayment\Filament\Resources\PaymentTokenResource;
 use Sumit\LaravelPayment\Filament\Resources\CustomerResource;
+use Sumit\LaravelPayment\Filament\Pages\ManageSumitPaymentSettings;
 
 class SumitPaymentPanelProvider extends PanelProvider
 {
@@ -25,7 +26,9 @@ class SumitPaymentPanelProvider extends PanelProvider
                 PaymentTokenResource::class,
                 CustomerResource::class,
             ])
-            ->pages([])
+            ->pages([
+                ManageSumitPaymentSettings::class,
+            ])
             ->widgets([]);
     }
 }
