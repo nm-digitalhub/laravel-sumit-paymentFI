@@ -8,8 +8,8 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Sumit\LaravelPayment\Filament\Resources\PaymentTokenResource\Pages;
@@ -29,9 +29,9 @@ class PaymentTokenResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Payment Tokens';
 
-    public static function form(Schema $schema): Schema
+    public static function form(Form $form): Form
     {
-        return $schema
+        return $form
             ->components([
                 Forms\Components\Section::make('Token Details')
                     ->schema([
