@@ -101,7 +101,8 @@ class OfficeGuyServiceProvider extends ServiceProvider
         // Register console commands if running in console
         if ($this->app->runningInConsole()) {
             $this->commands([
-                // Commands will be added here
+                \NmDigitalHub\LaravelOfficeGuy\Console\Commands\SyncStockCommand::class,
+                \NmDigitalHub\LaravelOfficeGuy\Console\Commands\TestCredentialsCommand::class,
             ]);
         }
     }
@@ -113,7 +114,18 @@ class OfficeGuyServiceProvider extends ServiceProvider
      */
     protected function registerEventListeners()
     {
-        // Event listeners will be registered here
+        // Register default event listeners
+        $events = $this->app['events'];
+
+        $events->listen(
+            \NmDigitalHub\LaravelOfficeGuy\Events\PaymentProcessed::class,
+            \NmDigitalHub\LaravelOfficeGuy\Listeners\LogSuccessfulPayment::class
+        );
+
+        $events->listen(
+            \NmDigitalHub\LaravelOfficeGuy\Events\PaymentFailed::class,
+            \NmDigitalHub\LaravelOfficeGuy\Listeners\LogFailedPayment::class
+        );
     }
 
     /**
