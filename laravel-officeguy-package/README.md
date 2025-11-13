@@ -2,6 +2,8 @@
 
 A comprehensive Laravel package for integrating SUMIT (OfficeGuy) payment gateway with invoice creation, credit card token storage, and secure transaction processing. This package is a complete conversion of the WooCommerce plugin to a Laravel 12+ compatible package.
 
+> **🚀 Quick Start**: See [QUICKSTART.md](QUICKSTART.md) for a 5-minute setup guide.
+
 ## Features
 
 - 🔒 **Secure Payment Processing** - PCI-compliant credit card processing

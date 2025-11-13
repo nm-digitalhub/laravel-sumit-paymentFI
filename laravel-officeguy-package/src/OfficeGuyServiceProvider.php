@@ -98,6 +98,9 @@ class OfficeGuyServiceProvider extends ServiceProvider
         // Register event listeners
         $this->registerEventListeners();
 
+        // Register middleware
+        $this->registerMiddleware();
+
         // Register console commands if running in console
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -126,6 +129,18 @@ class OfficeGuyServiceProvider extends ServiceProvider
             \NmDigitalHub\LaravelOfficeGuy\Events\PaymentFailed::class,
             \NmDigitalHub\LaravelOfficeGuy\Listeners\LogFailedPayment::class
         );
+    }
+
+    /**
+     * Register middleware.
+     *
+     * @return void
+     */
+    protected function registerMiddleware()
+    {
+        $router = $this->app['router'];
+        
+        $router->aliasMiddleware('officeguy.verify', \NmDigitalHub\LaravelOfficeGuy\Middleware\VerifyWebhookSignature::class);
     }
 
     /**

@@ -133,5 +133,16 @@ return [
         'prefix' => env('OFFICEGUY_ROUTE_PREFIX', 'officeguy'),
         'middleware' => ['api'],
         'webhook_middleware' => ['api', 'officeguy.verify'],
+        'success_url' => env('OFFICEGUY_SUCCESS_URL', '/payment/success'),
+        'failure_url' => env('OFFICEGUY_FAILURE_URL', '/payment/failure'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook Settings
+    |--------------------------------------------------------------------------
+    */
+    'webhook' => [
+        'verify_signature' => env('OFFICEGUY_VERIFY_WEBHOOK_SIGNATURE', false),
     ],
 ];
