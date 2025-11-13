@@ -1,0 +1,27 @@
+# Dependencies
+/vendor/
+node_modules/
+
+# Composer temporary files
+vendor/composer/tmp-*.zip~
+
+# Build artifacts
+/build/
+/dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Laravel
+/storage/*.key
+.env
+.env.backup
+.phpunit.result.cache
