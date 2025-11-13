@@ -143,7 +143,6 @@ class TransactionResource extends Resource
                         'refund' => 'warning',
                         default => 'gray',
                     }),
-                    ]),
                 Tables\Columns\IconColumn::make('is_subscription')
                     ->label('Subscription')
                     ->boolean(),
