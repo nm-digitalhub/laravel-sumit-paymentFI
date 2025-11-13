@@ -1,5 +1,5 @@
 {
-    "name": "sumit/laravel-payment-gateway",
+    "name": "NMDigitalHUB/laravel-payment-gateway",
     "description": "SUMIT Payment Gateway for Laravel - Accept credit card payments with invoice generation and secure token storage",
     "keywords": [
         "laravel",
