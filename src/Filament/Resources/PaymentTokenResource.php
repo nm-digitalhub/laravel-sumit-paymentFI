@@ -2,21 +2,26 @@
 
 namespace Sumit\LaravelPayment\Filament\Resources;
 
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Sumit\LaravelPayment\Models\PaymentToken;
 use Sumit\LaravelPayment\Filament\Resources\PaymentTokenResource\Pages;
+use Sumit\LaravelPayment\Models\PaymentToken;
 
 class PaymentTokenResource extends Resource
 {
     protected static ?string $model = PaymentToken::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-credit-card';
 
-    protected static ?string $navigationGroup = 'Payment Gateway';
+    protected static string|\UnitEnum|null $navigationGroup = 'Payment Gateway';
 
     protected static ?string $navigationLabel = 'Payment Tokens';
 
@@ -24,10 +29,10 @@ class PaymentTokenResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Payment Tokens';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Forms\Components\Section::make('Token Details')
                     ->schema([
                         Forms\Components\TextInput::make('user_id')
@@ -131,13 +136,13 @@ class PaymentTokenResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
