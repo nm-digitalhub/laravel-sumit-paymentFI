@@ -164,12 +164,72 @@ class CustomerResource extends Resource
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('pushToCrm')
+                    ->label('Push to CRM')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->modalHeading('Push Customer to SUMIT CRM')
+                    ->modalDescription(fn ($record) => "Push customer '{$record->name}' to SUMIT CRM?")
+                    ->action(function ($record) {
+                        $crmSync = app(\Sumit\LaravelPayment\Services\CrmSyncService::class);
+                        $result = $crmSync->pushCustomerToCrm($record);
+                        
+                        if ($result['success']) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Customer pushed successfully')
+                                ->body($result['message'])
+                                ->success()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Push failed')
+                                ->body($result['message'])
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('pushToCrm')
+                        ->label('Push to CRM')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->modalHeading('Push Selected Customers to SUMIT CRM')
+                        ->modalDescription('Push all selected customers to SUMIT CRM?')
+                        ->action(function ($records) {
+                            $crmSync = app(\Sumit\LaravelPayment\Services\CrmSyncService::class);
+                            $successCount = 0;
+                            $failCount = 0;
+                            
+                            foreach ($records as $record) {
+                                $result = $crmSync->pushCustomerToCrm($record);
+                                if ($result['success']) {
+                                    $successCount++;
+                                } else {
+                                    $failCount++;
+                                }
+                            }
+                            
+                            if ($failCount === 0) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Customers pushed successfully')
+                                    ->body("Successfully pushed {$successCount} customers to CRM")
+                                    ->success()
+                                    ->send();
+                            } else {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Push completed with issues')
+                                    ->body("Pushed {$successCount} customers, {$failCount} failed")
+                                    ->warning()
+                                    ->send();
+                            }
+                        }),
                     DeleteBulkAction::make(),
                 ]),
             ])

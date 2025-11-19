@@ -79,6 +79,32 @@ Features:
 
 Access via: **Admin Panel → Payment Gateway → Payment Tokens**
 
+### 4. Customer Resource with CRM Synchronization
+
+Manage SUMIT customers with bidirectional CRM synchronization:
+
+- **List View**: View all customers with filtering and search
+- **Create/Edit**: Manage customer information
+- **View**: See complete customer details with related transactions and tokens
+- **CRM Sync**: Bidirectional synchronization with SUMIT CRM
+
+Features:
+- Customer information (name, email, phone, address)
+- Business details (company name, tax ID)
+- SUMIT customer ID tracking
+- Relationship displays (transactions, payment tokens)
+
+CRM Synchronization Actions:
+- **Pull from CRM**: Fetch all customers from SUMIT CRM to local database
+- **Bidirectional Sync**: Two-way sync (pull + push) in one operation
+- **Push to CRM**: Push individual or bulk customers to SUMIT CRM
+- Real-time notifications for sync status
+- Detailed sync results with success/failure counts
+
+Access via: **Admin Panel → Payment Gateway → Customers**
+
+For detailed CRM synchronization documentation, see [CRM_SYNC_GUIDE.md](CRM_SYNC_GUIDE.md).
+
 ## Using Laravel Spatie Settings
 
 The payment settings are managed using [Laravel Spatie Settings](https://github.com/spatie/laravel-settings).

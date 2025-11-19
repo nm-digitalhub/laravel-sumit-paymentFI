@@ -16,6 +16,7 @@ A comprehensive Laravel package for integrating SUMIT payment gateway with your 
 - 📱 **Redirect & Direct** - Both redirect and direct payment flows
 - ⚙️ **Filament Integration** - Complete admin panel with settings, transactions, and token management
 - 🎨 **Spatie Settings** - Modern settings management with Laravel Spatie Settings
+- 🔁 **CRM Synchronization** - Bidirectional sync between local database and SUMIT CRM
 
 ## Requirements
 
