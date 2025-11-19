@@ -7,16 +7,19 @@ use Sumit\LaravelPayment\Models\Customer;
 use Sumit\LaravelPayment\Events\PaymentCompleted;
 use Sumit\LaravelPayment\Events\PaymentFailed;
 use Illuminate\Support\Facades\Event;
+use Sumit\LaravelPayment\Settings\PaymentSettings;
 
 class PaymentService
 {
     protected ApiService $apiService;
     protected TokenService $tokenService;
+    protected PaymentSettings $settings;
 
-    public function __construct(ApiService $apiService, TokenService $tokenService)
+    public function __construct(ApiService $apiService, TokenService $tokenService, PaymentSettings $settings)
     {
         $this->apiService = $apiService;
         $this->tokenService = $tokenService;
+        $this->settings = $settings;
     }
 
     /**
@@ -35,7 +38,7 @@ class PaymentService
             $path = $this->getPaymentPath($paymentData);
 
             // Make API call
-            $response = $this->apiService->post($request, $path, config('sumit-payment.send_client_ip', true));
+            $response = $this->apiService->post($request, $path, $this->settings->send_client_ip);
 
             if (!$response) {
                 throw new \Exception('No response from payment gateway');
@@ -83,8 +86,8 @@ class PaymentService
     {
         $request = [
             'Credentials' => [
-                'CompanyID' => config('sumit-payment.company_id'),
-                'APIPublicKey' => config('sumit-payment.api_public_key'),
+                'CompanyID' => $this->settings->company_id,
+                'APIPublicKey' => $this->settings->api_public_key,
             ],
             'CardNumber' => $cardData['card_number'],
             'ExpirationMonth' => $cardData['expiry_month'],
@@ -157,26 +160,26 @@ class PaymentService
     {
         $request = [
             'Credentials' => [
-                'CompanyID' => config('sumit-payment.company_id'),
-                'APIKey' => config('sumit-payment.api_key'),
+                'CompanyID' => $this->settings->company_id,
+                'APIKey' => $this->settings->api_key,
             ],
             'Items' => $this->buildItems($paymentData),
-            'VATIncluded' => config('sumit-payment.vat_included') ? 'true' : 'false',
-            'VATRate' => $paymentData['vat_rate'] ?? config('sumit-payment.default_vat_rate'),
+            'VATIncluded' => $this->settings->vat_included ? 'true' : 'false',
+            'VATRate' => $paymentData['vat_rate'] ?? $this->settings->default_vat_rate,
             'Customer' => $this->buildCustomer($paymentData),
-            'AuthoriseOnly' => config('sumit-payment.testing_mode') ? 'true' : 'false',
-            'DraftDocument' => config('sumit-payment.draft_document') ? 'true' : 'false',
-            'SendDocumentByEmail' => config('sumit-payment.email_document') ? 'true' : 'false',
+            'AuthoriseOnly' => $this->settings->testing_mode ? 'true' : 'false',
+            'DraftDocument' => $this->settings->draft_document ? 'true' : 'false',
+            'SendDocumentByEmail' => $this->settings->email_document ? 'true' : 'false',
             'DocumentDescription' => $paymentData['description'] ?? 'Order #' . ($paymentData['order_id'] ?? $transaction->id),
             'Payments_Count' => $paymentData['payments_count'] ?? 1,
             'MaximumPayments' => $this->getMaximumPayments($paymentData['amount']),
-            'DocumentLanguage' => $paymentData['language'] ?? config('sumit-payment.document_language'),
+            'DocumentLanguage' => $paymentData['language'] ?? $this->settings->document_language,
             'MerchantNumber' => $this->getMerchantNumber($paymentData),
         ];
 
         // Add authorization settings if enabled
-        if (config('sumit-payment.authorize_only')) {
-            $request['AutoCapture'] = config('sumit-payment.auto_capture') ? 'true' : 'false';
+        if ($this->settings->authorize_only) {
+            $request['AutoCapture'] = $this->settings->auto_capture ? 'true' : 'false';
             $request['AuthorizeAmount'] = $this->calculateAuthorizeAmount($paymentData['amount']);
         }
 
@@ -188,7 +191,7 @@ class PaymentService
         // Add payment method
         if (isset($paymentData['use_token']) && $paymentData['use_token']) {
             $request['PaymentMethod'] = $this->buildTokenPaymentMethod($paymentData);
-        } elseif (config('sumit-payment.pci_mode') === 'redirect') {
+        } elseif ($this->settings->pci_mode === 'redirect') {
             $request['RedirectURL'] = $this->buildRedirectUrl($transaction);
         } else {
             $request['PaymentMethod'] = $this->buildDirectPaymentMethod($paymentData);
@@ -277,11 +280,11 @@ class PaymentService
      */
     protected function getPaymentPath(array $paymentData): string
     {
-        if (config('sumit-payment.pci_mode') === 'redirect') {
+        if ($this->settings->pci_mode === 'redirect') {
             return '/website/payments/beginredirect/';
         }
 
-        if (config('sumit-payment.token_method') === 'J5') {
+        if ($this->settings->token_method === 'J5') {
             return '/website/payments/chargej5/';
         }
 
@@ -294,11 +297,11 @@ class PaymentService
     protected function getMerchantNumber(array $paymentData): string
     {
         if ($paymentData['is_subscription'] ?? false) {
-            return config('sumit-payment.subscriptions_merchant_number') 
-                ?: config('sumit-payment.merchant_number');
+            return $this->settings->subscriptions_merchant_number 
+                ?: $this->settings->merchant_number;
         }
 
-        return config('sumit-payment.merchant_number');
+        return $this->settings->merchant_number;
     }
 
     /**
@@ -307,7 +310,7 @@ class PaymentService
     protected function getMaximumPayments(float $amount): int
     {
         // Can be customized based on business logic
-        return config('sumit-payment.maximum_payments', 12);
+        return $this->settings->maximum_payments;
     }
 
     /**
@@ -317,12 +320,12 @@ class PaymentService
     {
         $authorizeAmount = $amount;
 
-        $addedPercent = config('sumit-payment.authorize_added_percent', 0);
+        $addedPercent = $this->settings->authorize_added_percent;
         if ($addedPercent > 0) {
             $authorizeAmount = round($authorizeAmount * (1 + $addedPercent / 100), 2);
         }
 
-        $minimumAddition = config('sumit-payment.authorize_minimum_addition', 0);
+        $minimumAddition = $this->settings->authorize_minimum_addition;
         if ($minimumAddition > 0 && ($authorizeAmount - $amount) < $minimumAddition) {
             $authorizeAmount = round($amount + $minimumAddition, 2);
         }

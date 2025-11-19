@@ -3,27 +3,28 @@
 namespace Sumit\LaravelPayment\Filament\Pages;
 
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Pages\SettingsPage;
 use Sumit\LaravelPayment\Settings\PaymentSettings;
 
 class ManagePaymentSettings extends SettingsPage
 {
-    protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-credit-card';
 
     protected static string $settings = PaymentSettings::class;
 
-    protected static ?string $navigationGroup = 'Payment Gateway';
+    protected static string|\UnitEnum|null $navigationGroup = 'Payment Gateway';
 
     protected static ?string $title = 'SUMIT Payment Settings';
 
     protected static ?string $navigationLabel = 'Payment Settings';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('API Credentials')
+        return $schema
+            ->components([
+                Section::make('API Credentials')
                     ->description('Your SUMIT API credentials for payment processing')
                     ->schema([
                         Forms\Components\TextInput::make('company_id')
@@ -48,7 +49,7 @@ class ManagePaymentSettings extends SettingsPage
                             ->maxLength(255),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Environment Settings')
+                Section::make('Environment Settings')
                     ->description('Configure the environment and mode settings')
                     ->schema([
                         Forms\Components\Select::make('environment')
@@ -73,7 +74,7 @@ class ManagePaymentSettings extends SettingsPage
                             ->required(),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Payment Settings')
+                Section::make('Payment Settings')
                     ->description('Configure payment processing options')
                     ->schema([
                         Forms\Components\TextInput::make('maximum_payments')
@@ -104,7 +105,7 @@ class ManagePaymentSettings extends SettingsPage
                             ->default(true),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Document Settings')
+                Section::make('Document Settings')
                     ->description('Configure invoice and receipt generation')
                     ->schema([
                         Forms\Components\Toggle::make('email_document')
@@ -125,7 +126,7 @@ class ManagePaymentSettings extends SettingsPage
                             ->default(false),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Authorization Settings')
+                Section::make('Authorization Settings')
                     ->description('Configure authorization-only transactions (J5)')
                     ->schema([
                         Forms\Components\Toggle::make('authorize_only')
@@ -151,7 +152,7 @@ class ManagePaymentSettings extends SettingsPage
                             ->suffix('₪'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('VAT Settings')
+                Section::make('VAT Settings')
                     ->description('Configure VAT calculation')
                     ->schema([
                         Forms\Components\Toggle::make('vat_included')

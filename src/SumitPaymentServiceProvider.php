@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Sumit\LaravelPayment\Services\PaymentService;
 use Sumit\LaravelPayment\Services\ApiService;
 use Sumit\LaravelPayment\Services\TokenService;
+use Sumit\LaravelPayment\Settings\PaymentSettings;
 
 class SumitPaymentServiceProvider extends ServiceProvider
 {
@@ -20,12 +21,9 @@ class SumitPaymentServiceProvider extends ServiceProvider
         );
 
         // Register services
-        $this->app->singleton(ApiService::class, function ($app) {
+        $this->app->bind(ApiService::class, function ($app) {
             return new ApiService(
-                config('sumit-payment.company_id'),
-                config('sumit-payment.api_key'),
-                config('sumit-payment.api_public_key'),
-                config('sumit-payment.environment')
+                $app->make(PaymentSettings::class)
             );
         });
 
@@ -33,20 +31,22 @@ class SumitPaymentServiceProvider extends ServiceProvider
             return new TokenService();
         });
 
-        $this->app->singleton(PaymentService::class, function ($app) {
+        $this->app->bind(PaymentService::class, function ($app) {
             return new PaymentService(
                 $app->make(ApiService::class),
-                $app->make(TokenService::class)
+                $app->make(TokenService::class),
+                $app->make(PaymentSettings::class)
             );
         });
 
-        $this->app->singleton(\Sumit\LaravelPayment\Services\RefundService::class, function ($app) {
+        $this->app->bind(\Sumit\LaravelPayment\Services\RefundService::class, function ($app) {
             return new \Sumit\LaravelPayment\Services\RefundService(
-                $app->make(ApiService::class)
+                $app->make(ApiService::class),
+                $app->make(PaymentSettings::class)
             );
         });
 
-        $this->app->singleton(\Sumit\LaravelPayment\Services\RecurringBillingService::class, function ($app) {
+        $this->app->bind(\Sumit\LaravelPayment\Services\RecurringBillingService::class, function ($app) {
             return new \Sumit\LaravelPayment\Services\RecurringBillingService(
                 $app->make(PaymentService::class),
                 $app->make(TokenService::class)

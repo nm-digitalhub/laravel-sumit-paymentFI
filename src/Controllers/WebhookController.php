@@ -9,9 +9,14 @@ use Sumit\LaravelPayment\Events\WebhookReceived;
 use Sumit\LaravelPayment\Events\PaymentStatusChanged;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Sumit\LaravelPayment\Settings\PaymentSettings;
 
 class WebhookController extends Controller
 {
+    public function __construct(protected PaymentSettings $settings)
+    {
+    }
+
     /**
      * Handle incoming webhook from SUMIT.
      */
@@ -239,7 +244,7 @@ class WebhookController extends Controller
     protected function validateWebhook(Request $request): bool
     {
         // If no signature header is present, skip validation in development
-        if (config('sumit-payment.testing_mode', false)) {
+        if ($this->settings->testing_mode) {
             return true;
         }
 
@@ -252,7 +257,7 @@ class WebhookController extends Controller
 
         // Validate signature using API key
         $payload = $request->getContent();
-        $expectedSignature = hash_hmac('sha256', $payload, config('sumit-payment.api_key'));
+        $expectedSignature = hash_hmac('sha256', $payload, $this->settings->api_key);
 
         return hash_equals($expectedSignature, $signature);
     }

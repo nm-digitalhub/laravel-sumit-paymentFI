@@ -5,27 +5,18 @@ namespace Sumit\LaravelPayment\Services;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
+use Sumit\LaravelPayment\Settings\PaymentSettings;
 
 class ApiService
 {
-    protected string $companyId;
-    protected string $apiKey;
-    protected string $apiPublicKey;
-    protected string $environment;
+    protected PaymentSettings $settings;
     protected Client $client;
 
-    public function __construct(
-        string $companyId,
-        string $apiKey,
-        string $apiPublicKey,
-        string $environment = 'www'
-    ) {
-        $this->companyId = $companyId;
-        $this->apiKey = $apiKey;
-        $this->apiPublicKey = $apiPublicKey;
-        $this->environment = $environment;
+    public function __construct(PaymentSettings $settings)
+    {
+        $this->settings = $settings;
         $this->client = new Client([
-            'timeout' => config('sumit-payment.api_timeout', 180),
+            'timeout' => $this->settings->api_timeout,
             'verify' => true,
         ]);
     }
@@ -35,8 +26,8 @@ class ApiService
      */
     protected function getUrl(string $path): string
     {
-        if ($this->environment === 'dev') {
-            return 'http://' . $this->environment . '.api.sumit.co.il' . $path;
+        if ($this->settings->environment === 'dev') {
+            return 'http://' . $this->settings->environment . '.api.sumit.co.il' . $path;
         }
 
         return 'https://api.sumit.co.il' . $path;
@@ -48,8 +39,8 @@ class ApiService
     protected function getCredentials(): array
     {
         return [
-            'CompanyID' => $this->companyId,
-            'APIKey' => $this->apiKey,
+            'CompanyID' => $this->settings->company_id,
+            'APIKey' => $this->settings->api_key,
         ];
     }
 
@@ -59,8 +50,8 @@ class ApiService
     protected function getPublicCredentials(): array
     {
         return [
-            'CompanyID' => $this->companyId,
-            'APIPublicKey' => $this->apiPublicKey,
+            'CompanyID' => $this->settings->company_id,
+            'APIPublicKey' => $this->settings->api_public_key,
         ];
     }
 

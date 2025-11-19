@@ -5,14 +5,17 @@ namespace Sumit\LaravelPayment\Services;
 use Sumit\LaravelPayment\Models\Transaction;
 use Sumit\LaravelPayment\Events\RefundProcessed;
 use Illuminate\Support\Facades\Event;
+use Sumit\LaravelPayment\Settings\PaymentSettings;
 
 class RefundService
 {
     protected ApiService $apiService;
+    protected PaymentSettings $settings;
 
-    public function __construct(ApiService $apiService)
+    public function __construct(ApiService $apiService, PaymentSettings $settings)
     {
         $this->apiService = $apiService;
+        $this->settings = $settings;
     }
 
     /**
@@ -49,8 +52,8 @@ class RefundService
         try {
             // Build refund request
             $request = [
-                'CompanyID' => config('sumit-payment.company_id'),
-                'APIKey' => config('sumit-payment.api_key'),
+                'CompanyID' => $this->settings->company_id,
+                'APIKey' => $this->settings->api_key,
                 'DocumentID' => $transaction->document_id,
                 'Amount' => $refundAmount,
                 'Reason' => $reason ?: 'Customer requested refund',

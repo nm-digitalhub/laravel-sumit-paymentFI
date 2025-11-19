@@ -2,14 +2,15 @@
 
 namespace Sumit\LaravelPayment\Filament\Resources;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Forms;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Sumit\LaravelPayment\Filament\Resources\PaymentTokenResource\Pages;
@@ -33,7 +34,7 @@ class PaymentTokenResource extends Resource
     {
         return $schema
             ->components([
-                Forms\Components\Section::make('Token Details')
+                Section::make('Token Details')
                     ->schema([
                         Forms\Components\TextInput::make('user_id')
                             ->label('User ID')
@@ -56,7 +57,7 @@ class PaymentTokenResource extends Resource
                             ->disabled(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Token Status')
+                Section::make('Token Status')
                     ->schema([
                         Forms\Components\Toggle::make('is_default')
                             ->label('Default Payment Method'),
@@ -65,7 +66,7 @@ class PaymentTokenResource extends Resource
                             ->disabled(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Metadata')
+                Section::make('Metadata')
                     ->schema([
                         Forms\Components\KeyValue::make('metadata')
                             ->label('Token Metadata')

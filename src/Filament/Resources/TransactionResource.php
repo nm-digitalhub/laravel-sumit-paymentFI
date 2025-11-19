@@ -2,8 +2,13 @@
 
 namespace Sumit\LaravelPayment\Filament\Resources;
 
+use Filament\Actions\ViewAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,9 +20,9 @@ class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
 
-    protected static ?string $navigationGroup = 'Payment Gateway';
+    protected static string|\UnitEnum|null $navigationGroup = 'Payment Gateway';
 
     protected static ?string $navigationLabel = 'Transactions';
 
@@ -25,11 +30,11 @@ class TransactionResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Transactions';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Transaction Details')
+        return $schema
+            ->components([
+                Section::make('Transaction Details')
                     ->schema([
                         Forms\Components\TextInput::make('transaction_id')
                             ->label('Transaction ID')
@@ -63,7 +68,7 @@ class TransactionResource extends Resource
                             ->disabled(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Customer Information')
+                Section::make('Customer Information')
                     ->schema([
                         Forms\Components\TextInput::make('user_id')
                             ->label('User ID')
@@ -73,7 +78,7 @@ class TransactionResource extends Resource
                             ->disabled(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Payment Details')
+                Section::make('Payment Details')
                     ->schema([
                         Forms\Components\TextInput::make('document_id')
                             ->label('Document ID')
@@ -92,7 +97,7 @@ class TransactionResource extends Resource
                             ->columnSpanFull(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Metadata')
+                Section::make('Metadata')
                     ->schema([
                         Forms\Components\KeyValue::make('metadata')
                             ->label('Transaction Metadata')
@@ -192,11 +197,11 @@ class TransactionResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                ViewAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

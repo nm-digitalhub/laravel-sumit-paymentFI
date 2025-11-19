@@ -5,16 +5,21 @@ namespace Sumit\LaravelPayment\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Sumit\LaravelPayment\Settings\PaymentSettings;
 
 class ValidatePaymentRequest
 {
+    public function __construct(protected PaymentSettings $settings)
+    {
+    }
+
     /**
      * Handle an incoming request.
      */
     public function handle(Request $request, Closure $next): Response
     {
         // Validate that SUMIT is properly configured
-        if (!config('sumit-payment.company_id') || !config('sumit-payment.api_key')) {
+        if (!$this->settings->company_id || !$this->settings->api_key) {
             return response()->json([
                 'success' => false,
                 'message' => 'Payment gateway is not properly configured',
