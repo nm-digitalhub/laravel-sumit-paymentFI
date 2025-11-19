@@ -43,11 +43,14 @@ class PaymentTokenResource extends Resource
                         Forms\Components\TextInput::make('token')
                             ->label('Token')
                             ->disabled(),
-                        Forms\Components\TextInput::make('card_last_four')
+                        Forms\Components\TextInput::make('last_four')
                             ->label('Card Last 4 Digits')
                             ->disabled(),
-                        Forms\Components\TextInput::make('card_brand')
-                            ->label('Card Brand')
+                        Forms\Components\TextInput::make('card_type')
+                            ->label('Card Type')
+                            ->disabled(),
+                        Forms\Components\TextInput::make('cardholder_name')
+                            ->label('Cardholder Name')
                             ->disabled(),
                         Forms\Components\TextInput::make('expiry_month')
                             ->label('Expiry Month')
@@ -86,16 +89,16 @@ class PaymentTokenResource extends Resource
                     ->label('User ID')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('card_brand')
-                    ->label('Card Brand')
+                Tables\Columns\TextColumn::make('card_type')
+                    ->label('Card Type')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn (?string $state): string => match ($state) {
                         'Visa' => 'info',
                         'MasterCard' => 'warning',
                         'American Express' => 'success',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('card_last_four')
+                Tables\Columns\TextColumn::make('last_four')
                     ->label('Card Ending')
                     ->formatStateUsing(fn (string $state): string => "**** **** **** {$state}"),
                 Tables\Columns\TextColumn::make('expiry')

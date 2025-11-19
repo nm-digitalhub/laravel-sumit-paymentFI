@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
@@ -55,6 +56,22 @@ class Customer extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(config('auth.providers.users.model'));
+    }
+
+    /**
+     * Get the transactions for the customer.
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'customer_id', 'sumit_customer_id');
+    }
+
+    /**
+     * Get the payment tokens for the customer.
+     */
+    public function paymentTokens(): HasMany
+    {
+        return $this->hasMany(PaymentToken::class, 'user_id', 'user_id');
     }
 
     /**
