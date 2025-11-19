@@ -443,12 +443,16 @@ public function panel(Panel $panel): Panel
 ### Features
 
 - **Settings Page** - Manage all payment gateway settings through a user-friendly interface
-- **Transaction Resource** - View, filter, and manage all transactions
+- **Transaction Resource** - View, filter, and manage all transactions with refund capabilities
 - **Payment Token Resource** - Manage saved payment methods
+- **Customer Resource** - Complete CRUD for SUMIT customers with relationship views
+- **Relationship Management** - Navigate between customers, transactions, and tokens
+- **Refund Actions** - Process refunds directly through the admin panel using SUMIT API
 - **Real-time Updates** - Live status updates and filtering
 - **Export Capabilities** - Export transaction data
 
 For detailed Filament integration guide, see [FILAMENT_INTEGRATION.md](FILAMENT_INTEGRATION.md).
+For recent improvements, see [FILAMENT_IMPROVEMENTS.md](FILAMENT_IMPROVEMENTS.md).
 
 ## Testing
 
