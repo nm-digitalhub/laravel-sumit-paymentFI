@@ -5,6 +5,7 @@ namespace Sumit\LaravelPayment\Filament\Resources\CustomerResource\RelationManag
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions\ViewAction;
 use Sumit\LaravelPayment\Models\PaymentToken;
 
 class PaymentTokensRelationManager extends RelationManager
@@ -60,7 +61,7 @@ class PaymentTokensRelationManager extends RelationManager
                 // Not allowing creation of tokens from here
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                     ->url(fn (PaymentToken $record): string => route('filament.admin.resources.payment-tokens.view', ['record' => $record])),
             ])
             ->bulkActions([

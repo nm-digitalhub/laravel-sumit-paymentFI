@@ -5,6 +5,7 @@ namespace Sumit\LaravelPayment\Filament\Resources\CustomerResource\RelationManag
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions\ViewAction;
 use Sumit\LaravelPayment\Models\Transaction;
 
 class TransactionsRelationManager extends RelationManager
@@ -69,7 +70,7 @@ class TransactionsRelationManager extends RelationManager
                 // Not allowing creation of transactions from here
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                     ->url(fn (Transaction $record): string => route('filament.admin.resources.transactions.view', ['record' => $record])),
             ])
             ->bulkActions([

@@ -216,7 +216,7 @@ class TransactionResource extends Resource
             ])
             ->actions([
                 ViewAction::make(),
-                Tables\Actions\Action::make('refund')
+                Action::make('refund')
                     ->label('Process Refund')
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')
