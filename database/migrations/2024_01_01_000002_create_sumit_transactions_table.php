@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('payment_method', 50);
             $table->decimal('amount', 10, 2);
             $table->string('currency', 3)->default('ILS');
-            $table->enum('status', ['pending', 'processing', 'completed', 'failed', 'refunded', 'cancelled'])->default('pending')->index();
+            $table->enum('status', ['pending', 'processing', 'completed', 'failed', 'refunded', 'cancelled'])->default('pending');
             $table->integer('payments_count')->default(1);
             $table->text('description')->nullable();
             $table->string('document_id', 255)->nullable();
