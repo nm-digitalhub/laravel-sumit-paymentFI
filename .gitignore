@@ -25,3 +25,4 @@ Thumbs.db
 .env
 .env.backup
 .phpunit.result.cache
+.phpunit.cache/

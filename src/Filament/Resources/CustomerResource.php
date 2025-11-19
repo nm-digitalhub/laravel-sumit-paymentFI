@@ -7,6 +7,8 @@ use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
@@ -164,7 +166,7 @@ class CustomerResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\Action::make('pushToCrm')
+                Action::make('pushToCrm')
                     ->label('Push to CRM')
                     ->icon('heroicon-o-arrow-up-tray')
                     ->color('info')
@@ -195,7 +197,7 @@ class CustomerResource extends Resource
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('pushToCrm')
+                    BulkAction::make('pushToCrm')
                         ->label('Push to CRM')
                         ->icon('heroicon-o-arrow-up-tray')
                         ->color('info')
