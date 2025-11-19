@@ -6,6 +6,7 @@ use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Sumit\LaravelPayment\Filament\Resources\TransactionResource;
 use Sumit\LaravelPayment\Filament\Resources\PaymentTokenResource;
+use Sumit\LaravelPayment\Filament\Resources\CustomerResource;
 use Sumit\LaravelPayment\Filament\Pages\ManagePaymentSettings;
 
 class SumitPaymentPlugin implements Plugin
@@ -21,6 +22,7 @@ class SumitPaymentPlugin implements Plugin
             ->resources([
                 TransactionResource::class,
                 PaymentTokenResource::class,
+                CustomerResource::class,
             ])
             ->pages([
                 ManagePaymentSettings::class,

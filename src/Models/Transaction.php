@@ -73,6 +73,14 @@ class Transaction extends Model
     }
 
     /**
+     * Get the customer associated with the transaction.
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'customer_id', 'sumit_customer_id');
+    }
+
+    /**
      * Check if transaction is successful.
      */
     public function isSuccessful(): bool

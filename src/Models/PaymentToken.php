@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PaymentToken extends Model
 {
@@ -26,6 +27,7 @@ class PaymentToken extends Model
         'cardholder_name',
         'is_default',
         'expires_at',
+        'last_used_at',
     ];
 
     /**
@@ -36,6 +38,7 @@ class PaymentToken extends Model
     protected $casts = [
         'is_default' => 'boolean',
         'expires_at' => 'datetime',
+        'last_used_at' => 'datetime',
     ];
 
     /**
@@ -64,6 +67,14 @@ class PaymentToken extends Model
     }
 
     /**
+     * Get the transactions that used this token.
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    /**
      * Check if the token is expired.
      */
     public function isExpired(): bool
@@ -73,6 +84,30 @@ class PaymentToken extends Model
         }
         
         return $this->expires_at->isPast();
+    }
+
+    /**
+     * Get the is_active attribute (non-expired tokens).
+     */
+    public function getIsActiveAttribute(): bool
+    {
+        return !$this->isExpired();
+    }
+
+    /**
+     * Get the card_brand attribute (alias for card_type).
+     */
+    public function getCardBrandAttribute(): ?string
+    {
+        return $this->card_type;
+    }
+
+    /**
+     * Get the card_last_four attribute (alias for last_four).
+     */
+    public function getCardLastFourAttribute(): string
+    {
+        return $this->last_four;
     }
 
     /**

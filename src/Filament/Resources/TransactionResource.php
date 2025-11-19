@@ -6,14 +6,17 @@ use Filament\Actions\ViewAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
 use Sumit\LaravelPayment\Models\Transaction;
 use Sumit\LaravelPayment\Filament\Resources\TransactionResource\Pages;
+use Sumit\LaravelPayment\Services\RefundService;
 use Filament\Support\Enums\FontWeight;
 
 class TransactionResource extends Resource
@@ -73,8 +76,14 @@ class TransactionResource extends Resource
                         Forms\Components\TextInput::make('user_id')
                             ->label('User ID')
                             ->disabled(),
+                        Forms\Components\TextInput::make('customer_id')
+                            ->label('Customer ID')
+                            ->disabled(),
                         Forms\Components\TextInput::make('order_id')
                             ->label('Order ID')
+                            ->disabled(),
+                        Forms\Components\TextInput::make('payment_token_id')
+                            ->label('Payment Token ID')
                             ->disabled(),
                     ])->columns(2),
 
@@ -154,7 +163,16 @@ class TransactionResource extends Resource
                 Tables\Columns\TextColumn::make('user_id')
                     ->label('User ID')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('customer.name')
+                    ->label('Customer')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('paymentToken.last_four')
+                    ->label('Card')
+                    ->formatStateUsing(fn ($state) => $state ? "****{$state}" : '-')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created At')
                     ->dateTime()
@@ -198,6 +216,51 @@ class TransactionResource extends Resource
             ])
             ->actions([
                 ViewAction::make(),
+                Tables\Actions\Action::make('refund')
+                    ->label('Process Refund')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->form([
+                        Forms\Components\TextInput::make('refund_amount')
+                            ->label('Refund Amount')
+                            ->numeric()
+                            ->required()
+                            ->prefix('₪')
+                            ->helperText(fn ($record) => "Maximum refundable: ₪{$record->amount}"),
+                        Forms\Components\Textarea::make('refund_reason')
+                            ->label('Refund Reason')
+                            ->rows(3)
+                            ->maxLength(500),
+                    ])
+                    ->action(function (Transaction $record, array $data) {
+                        $refundService = app(RefundService::class);
+                        $result = $refundService->processRefund(
+                            $record,
+                            $data['refund_amount'] ?? null,
+                            $data['refund_reason'] ?? null
+                        );
+
+                        if ($result['success']) {
+                            Notification::make()
+                                ->title('Refund Processed')
+                                ->body('The refund has been processed successfully.')
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Refund Failed')
+                                ->body($result['message'] ?? 'Failed to process refund.')
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->requiresConfirmation()
+                    ->modalDescription('Are you sure you want to process this refund? This action cannot be undone.')
+                    ->visible(fn (Transaction $record) => 
+                        $record->status === 'completed' && 
+                        $record->type !== 'refund' &&
+                        (!$record->refund_amount || $record->refund_amount < $record->amount)
+                    ),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
