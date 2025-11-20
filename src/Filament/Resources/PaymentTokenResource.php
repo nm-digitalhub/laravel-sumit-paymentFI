@@ -7,14 +7,18 @@ use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
 use Sumit\LaravelPayment\Filament\Resources\PaymentTokenResource\Pages;
+use Sumit\LaravelPayment\Filament\Resources\PaymentTokenResource\RelationManagers;
 use Sumit\LaravelPayment\Models\PaymentToken;
+use Sumit\LaravelPayment\Services\PaymentService;
 
 class PaymentTokenResource extends Resource
 {
@@ -122,6 +126,17 @@ class PaymentTokenResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('transactions_count')
+                    ->label('Uses')
+                    ->counts('transactions')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('transactions_sum_amount')
+                    ->label('Total Charged')
+                    ->sum('transactions', 'amount')
+                    ->money('ILS')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\Filter::make('is_default')
@@ -142,6 +157,76 @@ class PaymentTokenResource extends Resource
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('charge')
+                    ->label('Charge Token')
+                    ->icon('heroicon-o-credit-card')
+                    ->color('success')
+                    ->form([
+                        Forms\Components\TextInput::make('amount')
+                            ->label('Amount')
+                            ->numeric()
+                            ->required()
+                            ->minValue(0.01)
+                            ->prefix('₪')
+                            ->helperText('Amount to charge in ILS'),
+                        Forms\Components\TextInput::make('order_id')
+                            ->label('Order ID')
+                            ->maxLength(255)
+                            ->helperText('Optional order identifier'),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Description')
+                            ->rows(2)
+                            ->maxLength(500)
+                            ->helperText('Payment description'),
+                        Forms\Components\TextInput::make('customer_name')
+                            ->label('Customer Name')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('customer_email')
+                            ->label('Customer Email')
+                            ->email()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('customer_phone')
+                            ->label('Customer Phone')
+                            ->tel()
+                            ->maxLength(50),
+                    ])
+                    ->action(function (PaymentToken $record, array $data) {
+                        $paymentService = app(PaymentService::class);
+                        
+                        $paymentData = [
+                            'user_id' => $record->user_id,
+                            'amount' => $data['amount'],
+                            'currency' => 'ILS',
+                            'order_id' => $data['order_id'] ?? null,
+                            'description' => $data['description'] ?? 'Payment via saved token',
+                            'customer_name' => $data['customer_name'] ?? '',
+                            'customer_email' => $data['customer_email'] ?? '',
+                            'customer_phone' => $data['customer_phone'] ?? null,
+                        ];
+                        
+                        $result = $paymentService->processPaymentWithToken($paymentData, $record->id);
+                        
+                        if ($result['success']) {
+                            Notification::make()
+                                ->title('Payment Processed')
+                                ->body('Payment of ₪' . number_format($data['amount'], 2) . ' charged successfully.')
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Payment Failed')
+                                ->body($result['message'] ?? 'Failed to process payment.')
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->requiresConfirmation()
+                    ->modalDescription(fn (PaymentToken $record): string => 
+                        "Charge payment to card ending in {$record->last_four}?"
+                    )
+                    ->visible(fn (PaymentToken $record) => 
+                        !$record->isExpired() && $record->is_active
+                    ),
                 DeleteAction::make(),
             ])
             ->bulkActions([
@@ -155,7 +240,7 @@ class PaymentTokenResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\TransactionsRelationManager::class,
         ];
     }
 

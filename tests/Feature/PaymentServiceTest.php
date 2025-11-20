@@ -234,4 +234,95 @@ class PaymentServiceTest extends TestCase
 
         $this->assertTrue(true); // Ensures no exceptions thrown
     }
+
+    public function test_capture_transaction_succeeds_for_authorized_transaction()
+    {
+        // Create an authorized transaction
+        $transaction = Transaction::create([
+            'amount' => 150.00,
+            'currency' => 'ILS',
+            'status' => 'authorized',
+            'payment_method' => 'credit_card',
+            'transaction_id' => 'AUTH-12345',
+        ]);
+
+        // Mock the API service
+        $mock = \Mockery::mock(ApiService::class);
+        $mock->shouldReceive('post')
+            ->once()
+            ->with(
+                \Mockery::on(function (array $payload) {
+                    return ($payload['PaymentID'] ?? null) === 'AUTH-12345'
+                        && ($payload['Amount'] ?? null) === 150.00;
+                }),
+                '/website/payments/capture/',
+                false
+            )
+            ->andReturn([
+                'Status' => 'Success',
+                'PaymentID' => 'PAY-12345',
+                'DocumentID' => 'DOC-12345',
+            ]);
+
+        $this->app->instance(ApiService::class, $mock);
+
+        /** @var PaymentService $service */
+        $service = $this->app->make(PaymentService::class);
+        $result = $service->captureTransaction($transaction);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals('Transaction captured successfully', $result['message']);
+        
+        // Refresh transaction to get updated values
+        $transaction->refresh();
+        $this->assertEquals('completed', $transaction->status);
+    }
+
+    public function test_capture_transaction_fails_for_non_authorized_transaction()
+    {
+        // Create a completed transaction (not authorized)
+        $transaction = Transaction::create([
+            'amount' => 150.00,
+            'currency' => 'ILS',
+            'status' => 'completed',
+            'payment_method' => 'credit_card',
+        ]);
+
+        /** @var PaymentService $service */
+        $service = $this->app->make(PaymentService::class);
+        $result = $service->captureTransaction($transaction);
+
+        $this->assertFalse($result['success']);
+        $this->assertEquals('Transaction must be in authorized status to be captured', $result['message']);
+    }
+
+    public function test_capture_transaction_handles_api_failure()
+    {
+        // Create an authorized transaction
+        $transaction = Transaction::create([
+            'amount' => 150.00,
+            'currency' => 'ILS',
+            'status' => 'authorized',
+            'payment_method' => 'credit_card',
+            'transaction_id' => 'AUTH-12345',
+        ]);
+
+        // Mock the API service to return failure
+        $mock = \Mockery::mock(ApiService::class);
+        $mock->shouldReceive('post')
+            ->once()
+            ->andReturn([
+                'Status' => 'Error',
+                'UserErrorMessage' => 'Capture failed - insufficient funds',
+            ]);
+
+        $this->app->instance(ApiService::class, $mock);
+
+        /** @var PaymentService $service */
+        $service = $this->app->make(PaymentService::class);
+        $result = $service->captureTransaction($transaction);
+
+        $this->assertFalse($result['success']);
+        $this->assertEquals('Capture failed - insufficient funds', $result['message']);
+    }
 }

@@ -429,4 +429,74 @@ class PaymentService
             ];
         }
     }
+
+    /**
+     * Capture an authorized transaction.
+     */
+    public function captureTransaction(Transaction $transaction, ?float $amount = null): array
+    {
+        // Validate transaction is in authorized status
+        if ($transaction->status !== 'authorized') {
+            return [
+                'success' => false,
+                'message' => 'Transaction must be in authorized status to be captured',
+            ];
+        }
+
+        // Use full amount if not specified
+        $captureAmount = $amount ?? $transaction->amount;
+
+        try {
+            // Build capture request
+            $request = [
+                'Credentials' => [
+                    'CompanyID' => $this->settings->company_id,
+                    'APIKey' => $this->settings->api_key,
+                ],
+                'PaymentID' => $transaction->transaction_id,
+                'Amount' => $captureAmount,
+            ];
+
+            // Make API call to capture endpoint
+            $response = $this->apiService->post($request, '/website/payments/capture/', $this->settings->send_client_ip);
+
+            if (!$response) {
+                throw new \Exception('No response from payment gateway');
+            }
+
+            // Handle response
+            if (($response['Status'] ?? '') === 'Success') {
+                // Update transaction to completed
+                $transaction->markAsCompleted(
+                    $response['PaymentID'] ?? $transaction->transaction_id,
+                    $response['DocumentID'] ?? null
+                );
+
+                Event::dispatch(new PaymentCompleted($transaction));
+
+                return [
+                    'success' => true,
+                    'message' => 'Transaction captured successfully',
+                    'transaction' => $transaction,
+                    'response' => $response,
+                ];
+            } else {
+                $errorMessage = $response['UserErrorMessage'] ?? 'Capture failed';
+                
+                return [
+                    'success' => false,
+                    'message' => $errorMessage,
+                    'transaction' => $transaction,
+                    'response' => $response,
+                ];
+            }
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'transaction' => $transaction,
+            ];
+        }
+    }
 }
