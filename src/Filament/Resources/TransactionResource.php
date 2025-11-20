@@ -17,6 +17,7 @@ use Filament\Notifications\Notification;
 use Sumit\LaravelPayment\Models\Transaction;
 use Sumit\LaravelPayment\Filament\Resources\TransactionResource\Pages;
 use Sumit\LaravelPayment\Services\RefundService;
+use Sumit\LaravelPayment\Services\PaymentService;
 use Filament\Support\Enums\FontWeight;
 
 class TransactionResource extends Resource
@@ -216,6 +217,44 @@ class TransactionResource extends Resource
             ])
             ->actions([
                 ViewAction::make(),
+                Action::make('capture')
+                    ->label('Capture Payment')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->form([
+                        Forms\Components\TextInput::make('capture_amount')
+                            ->label('Capture Amount')
+                            ->numeric()
+                            ->required()
+                            ->prefix('₪')
+                            ->helperText(fn ($record) => "Maximum capturable: ₪{$record->amount}"),
+                    ])
+                    ->action(function (Transaction $record, array $data) {
+                        $paymentService = app(PaymentService::class);
+                        $result = $paymentService->captureTransaction(
+                            $record,
+                            $data['capture_amount'] ?? null
+                        );
+
+                        if ($result['success']) {
+                            Notification::make()
+                                ->title('Payment Captured')
+                                ->body('The payment has been captured successfully.')
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Capture Failed')
+                                ->body($result['message'] ?? 'Failed to capture payment.')
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->requiresConfirmation()
+                    ->modalDescription('Are you sure you want to capture this authorized payment? This will complete the transaction.')
+                    ->visible(fn (Transaction $record) => 
+                        $record->status === 'authorized'
+                    ),
                 Action::make('refund')
                     ->label('Process Refund')
                     ->icon('heroicon-o-arrow-path')
