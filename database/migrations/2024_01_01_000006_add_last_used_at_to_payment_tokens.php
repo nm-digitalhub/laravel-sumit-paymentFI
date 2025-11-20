@@ -13,9 +13,11 @@ return new class extends Migration
     {
         $tableName = config('sumit-payment.tables.payment_tokens', 'sumit_payment_tokens');
         
-        Schema::table($tableName, function (Blueprint $table) {
-            $table->timestamp('last_used_at')->nullable()->after('expires_at');
-        });
+        if (Schema::hasTable($tableName) && !Schema::hasColumn($tableName, 'last_used_at')) {
+            Schema::table($tableName, function (Blueprint $table) {
+                $table->timestamp('last_used_at')->nullable()->after('expires_at');
+            });
+        }
     }
 
     /**
@@ -25,8 +27,10 @@ return new class extends Migration
     {
         $tableName = config('sumit-payment.tables.payment_tokens', 'sumit_payment_tokens');
         
-        Schema::table($tableName, function (Blueprint $table) {
-            $table->dropColumn('last_used_at');
-        });
+        if (Schema::hasTable($tableName) && Schema::hasColumn($tableName, 'last_used_at')) {
+            Schema::table($tableName, function (Blueprint $table) {
+                $table->dropColumn('last_used_at');
+            });
+        }
     }
 };
