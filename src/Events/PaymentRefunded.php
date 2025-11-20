@@ -7,12 +7,12 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Payment Completed Event
+ * Payment Refunded Event
  * 
- * Fired when a payment is successfully processed.
+ * Fired when a payment is refunded.
  * This event uses primitive data and is completely model-agnostic.
  */
-class PaymentCompleted
+class PaymentRefunded
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -21,11 +21,10 @@ class PaymentCompleted
      */
     public function __construct(
         public readonly string $transactionId,
-        public readonly float $amount,
-        public readonly string $currency = 'ILS',
-        public readonly ?string $documentId = null,
-        public readonly ?string $authorizationNumber = null,
-        public readonly ?string $customerId = null,
+        public readonly float $refundAmount,
+        public readonly bool $isPartial = false,
+        public readonly ?string $refundDocumentId = null,
+        public readonly ?string $reason = null,
         public readonly array $metadata = []
     ) {}
 }
