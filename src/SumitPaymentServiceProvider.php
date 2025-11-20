@@ -3,6 +3,7 @@
 namespace Sumit\LaravelPayment;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event;
 use Sumit\LaravelPayment\Services\PaymentService;
 use Sumit\LaravelPayment\Services\ApiService;
 use Sumit\LaravelPayment\Services\TokenService;
@@ -72,8 +73,10 @@ class SumitPaymentServiceProvider extends ServiceProvider
             __DIR__.'/../database/migrations' => database_path('migrations'),
         ], 'sumit-payment-migrations');
 
-        // Load migrations
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        // Load migrations (only if models are enabled)
+        if ($this->shouldLoadMigrations()) {
+            $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        }
 
         // Load routes
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
@@ -85,6 +88,66 @@ class SumitPaymentServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/sumit-payment'),
         ], 'sumit-payment-views');
+
+        // Register optional model listeners
+        $this->registerModelListeners();
+    }
+
+    /**
+     * Register optional model listeners
+     * 
+     * These listeners are only registered if the corresponding models are enabled.
+     * Users can choose to disable models and use their own storage implementation.
+     */
+    protected function registerModelListeners(): void
+    {
+        // Only register if models are enabled
+        if (!$this->areModelsEnabled()) {
+            return;
+        }
+
+        Event::listen(
+            \Sumit\LaravelPayment\Events\PaymentCreated::class,
+            \Sumit\LaravelPayment\Listeners\ModelListeners\StorePaymentInDatabase::class
+        );
+
+        Event::listen(
+            \Sumit\LaravelPayment\Events\PaymentCompleted::class,
+            \Sumit\LaravelPayment\Listeners\ModelListeners\UpdatePaymentStatus::class
+        );
+
+        Event::listen(
+            \Sumit\LaravelPayment\Events\PaymentFailed::class,
+            \Sumit\LaravelPayment\Listeners\ModelListeners\MarkPaymentAsFailed::class
+        );
+
+        Event::listen(
+            \Sumit\LaravelPayment\Events\TokenCreated::class,
+            \Sumit\LaravelPayment\Listeners\ModelListeners\StoreTokenInDatabase::class
+        );
+
+        Event::listen(
+            \Sumit\LaravelPayment\Events\PaymentRefunded::class,
+            \Sumit\LaravelPayment\Listeners\ModelListeners\RecordRefund::class
+        );
+    }
+
+    /**
+     * Check if models are enabled in configuration
+     */
+    protected function areModelsEnabled(): bool
+    {
+        return config('sumit-payment.models.transaction') !== null
+            || config('sumit-payment.models.token') !== null
+            || config('sumit-payment.models.customer') !== null;
+    }
+
+    /**
+     * Check if migrations should be loaded
+     */
+    protected function shouldLoadMigrations(): bool
+    {
+        return $this->areModelsEnabled();
     }
 
     /**

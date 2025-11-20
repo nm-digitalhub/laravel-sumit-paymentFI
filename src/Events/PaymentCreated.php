@@ -5,14 +5,16 @@ namespace Sumit\LaravelPayment\Events;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Sumit\LaravelPayment\DTO\PaymentData;
+use Sumit\LaravelPayment\DTO\PaymentResponse;
 
 /**
- * Payment Failed Event
+ * Payment Created Event
  * 
- * Fired when a payment fails.
- * This event uses primitive data and is completely model-agnostic.
+ * Fired when a payment is initiated.
+ * This event uses DTOs and is completely model-agnostic.
  */
-class PaymentFailed
+class PaymentCreated
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -20,9 +22,7 @@ class PaymentFailed
      * Create a new event instance.
      */
     public function __construct(
-        public readonly string $transactionId,
-        public readonly string $errorMessage,
-        public readonly ?float $amount = null,
-        public readonly array $metadata = []
+        public readonly PaymentResponse $response,
+        public readonly PaymentData $request
     ) {}
 }
