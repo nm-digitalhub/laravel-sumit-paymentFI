@@ -2,6 +2,40 @@
 
 A comprehensive Laravel package for integrating SUMIT payment gateway with your Laravel 11+ application. This package provides secure payment processing, credit card tokenization, invoice generation, recurring billing capabilities, and full Filament Admin Panel integration.
 
+## 🎯 Architecture Philosophy
+
+**This package follows a zero-assumptions, event-driven architecture:**
+
+- ✅ **100% Optional Models** - Use package models, your own models, or no models at all
+- ✅ **Event-Driven** - All operations fire events with DTOs and primitive data
+- ✅ **No Database Assumptions** - Package doesn't force any database schema
+- ✅ **Framework, Not Opinionated** - Works with any Laravel project structure
+- ✅ **Customizable** - Implement interfaces to override any behavior
+
+**Quick Examples:**
+
+```php
+// Use your own models - just listen to events
+Event::listen(PaymentCompleted::class, function($event) {
+    YourPayment::create([
+        'order_id' => $event->metadata['order_id'],
+        'transaction_id' => $event->transactionId,
+        'amount' => $event->amount,
+    ]);
+});
+
+// Or use package models (optional)
+Transaction::where('user_id', auth()->id())->get();
+
+// Or disable models entirely
+// SUMIT_TRANSACTION_MODEL=null in .env
+```
+
+📚 **See [GENERIC_ARCHITECTURE.md](GENERIC_ARCHITECTURE.md) for complete architecture guide**  
+📚 **See [INTEGRATION_EXAMPLES.md](INTEGRATION_EXAMPLES.md) for real-world examples**
+
+---
+
 ## Features
 
 - 💳 **Secure Payment Processing** - Process credit card payments with PCI compliance
@@ -63,9 +97,92 @@ SUMIT_PCI_MODE=direct
 SUMIT_EMAIL_DOCUMENT=true
 SUMIT_DOCUMENT_LANGUAGE=he
 SUMIT_MAXIMUM_PAYMENTS=12
+
+# Model Configuration (Optional - set to null to disable)
+SUMIT_TRANSACTION_MODEL=Sumit\LaravelPayment\Models\Transaction
+SUMIT_TOKEN_MODEL=Sumit\LaravelPayment\Models\PaymentToken
+SUMIT_CUSTOMER_MODEL=Sumit\LaravelPayment\Models\Customer
 ```
 
 ## Usage
+
+### Two Ways to Use This Package
+
+#### 1. Generic Mode (Recommended for New Projects) ✨
+
+**Use your own models and event listeners:**
+
+```php
+// 1. Disable package models in .env
+SUMIT_TRANSACTION_MODEL=null
+SUMIT_TOKEN_MODEL=null
+
+// 2. Create event listener
+use Sumit\LaravelPayment\Events\PaymentCompleted;
+
+Event::listen(PaymentCompleted::class, function($event) {
+    YourPayment::create([
+        'order_id' => $event->metadata['order_id'],
+        'transaction_id' => $event->transactionId,
+        'amount' => $event->amount,
+    ]);
+});
+
+// 3. Process payment using DTOs
+use Sumit\LaravelPayment\Services\GenericPaymentService;
+use Sumit\LaravelPayment\DTO\PaymentData;
+
+$payment = app(GenericPaymentService::class);
+$response = $payment->createPayment(new PaymentData(
+    amount: 100.00,
+    currency: 'ILS',
+    customerName: 'John Doe',
+    customerEmail: 'john@example.com',
+    metadata: ['order_id' => 123]
+));
+```
+
+**Benefits:**
+- ✅ 100% control over your data structure
+- ✅ No database schema forced by package
+- ✅ Perfect for existing applications
+- ✅ Package updates won't break your code
+
+📚 **See [GENERIC_ARCHITECTURE.md](GENERIC_ARCHITECTURE.md) for complete guide**
+
+---
+
+#### 2. Traditional Mode (Quick Start)
+
+**Use package models for quick setup:**
+
+```php
+// 1. Keep models enabled in .env (default)
+SUMIT_TRANSACTION_MODEL=Sumit\LaravelPayment\Models\Transaction
+
+// 2. Process payment (automatically stores in database)
+use Sumit\LaravelPayment\Services\PaymentService;
+
+$result = app(PaymentService::class)->processPayment([
+    'amount' => 100.00,
+    'customer_name' => 'John Doe',
+    'customer_email' => 'john@example.com',
+]);
+
+// 3. Query transactions
+use Sumit\LaravelPayment\Models\Transaction;
+
+$transactions = Transaction::where('user_id', auth()->id())
+    ->completed()
+    ->get();
+```
+
+**Benefits:**
+- ✅ Quick start
+- ✅ Pre-built models and migrations
+- ✅ Works immediately after installation
+
+---
 
 ### Basic Payment Processing
 
@@ -143,7 +260,28 @@ class CheckoutController extends Controller
 
 ## Events
 
-The package dispatches the following events:
+The package dispatches model-agnostic events using DTOs and primitive data:
+
+### PaymentCreated
+
+Fired when a payment is initiated:
+
+```php
+use Sumit\LaravelPayment\Events\PaymentCreated;
+
+Event::listen(PaymentCreated::class, function (PaymentCreated $event) {
+    // Access DTOs
+    $request = $event->request;  // PaymentData DTO
+    $response = $event->response; // PaymentResponse DTO
+    
+    // Store in your database
+    YourPayment::create([
+        'transaction_id' => $response->transactionId,
+        'amount' => $request->amount,
+        'metadata' => $request->metadata,
+    ]);
+});
+```
 
 ### PaymentCompleted
 
@@ -153,8 +291,17 @@ Fired when a payment is successfully processed:
 use Sumit\LaravelPayment\Events\PaymentCompleted;
 
 Event::listen(PaymentCompleted::class, function (PaymentCompleted $event) {
-    $transaction = $event->transaction;
-    // Send confirmation email, update order status, etc.
+    // Access primitive data
+    $event->transactionId;       // string
+    $event->amount;              // float
+    $event->currency;            // string
+    $event->documentId;          // string|null
+    $event->authorizationNumber; // string|null
+    $event->metadata;            // array - your custom data
+    
+    // Update order status
+    Order::where('id', $event->metadata['order_id'])
+        ->update(['status' => 'paid']);
 });
 ```
 
@@ -166,9 +313,28 @@ Fired when a payment fails:
 use Sumit\LaravelPayment\Events\PaymentFailed;
 
 Event::listen(PaymentFailed::class, function (PaymentFailed $event) {
-    $transaction = $event->transaction;
-    $errorMessage = $event->errorMessage;
+    $event->transactionId;  // string
+    $event->errorMessage;   // string
+    $event->amount;         // float|null
+    $event->metadata;       // array
+    
     // Log error, notify admin, etc.
+});
+```
+
+### PaymentRefunded
+
+Fired when a payment is refunded:
+
+```php
+use Sumit\LaravelPayment\Events\PaymentRefunded;
+
+Event::listen(PaymentRefunded::class, function (PaymentRefunded $event) {
+    $event->transactionId;      // string
+    $event->refundAmount;       // float
+    $event->isPartial;          // bool
+    $event->refundDocumentId;   // string|null
+    $event->metadata;           // array
 });
 ```
 
@@ -180,12 +346,44 @@ Fired when a new payment token is created:
 use Sumit\LaravelPayment\Events\TokenCreated;
 
 Event::listen(TokenCreated::class, function (TokenCreated $event) {
-    $token = $event->token;
-    // Send notification to user
+    $tokenData = $event->tokenData;  // TokenData DTO
+    $userId = $event->userId;         // mixed
+    
+    // Store token in your database
+    YourToken::create([
+        'user_id' => $userId,
+        'token' => $tokenData->token,
+        'last_four' => $tokenData->lastFourDigits,
+    ]);
 });
 ```
 
-## Models
+### WebhookReceived
+
+Fired for all webhook events:
+
+```php
+use Sumit\LaravelPayment\Events\WebhookReceived;
+
+Event::listen(WebhookReceived::class, function (WebhookReceived $event) {
+    $event->eventType; // string
+    $event->data;      // array
+});
+```
+
+**All events are model-agnostic** - they don't pass Eloquent models, only DTOs and primitive data. This allows you to handle data storage in your own way.
+
+## Models (Optional)
+
+**Note:** All package models are optional. You can disable them and use your own models by setting them to `null` in `.env`:
+
+```env
+SUMIT_TRANSACTION_MODEL=null
+SUMIT_TOKEN_MODEL=null
+SUMIT_CUSTOMER_MODEL=null
+```
+
+When models are disabled, the package only fires events. You handle data storage via event listeners.
 
 ### Transaction
 
