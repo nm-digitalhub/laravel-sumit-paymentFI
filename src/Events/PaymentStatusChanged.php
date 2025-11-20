@@ -2,22 +2,27 @@
 
 namespace Sumit\LaravelPayment\Events;
 
-use Sumit\LaravelPayment\Models\Transaction;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Payment Status Changed Event
+ * 
+ * Fired when a payment status changes.
+ * This event uses primitive data and is completely model-agnostic.
+ */
 class PaymentStatusChanged
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public Transaction $transaction;
-    public string $newStatus;
-    public string $oldStatus;
-
-    public function __construct(Transaction $transaction, string $newStatus, string $oldStatus)
-    {
-        $this->transaction = $transaction;
-        $this->newStatus = $newStatus;
-        $this->oldStatus = $oldStatus;
-    }
+    /**
+     * Create a new event instance.
+     */
+    public function __construct(
+        public readonly string $transactionId,
+        public readonly string $newStatus,
+        public readonly string $oldStatus,
+        public readonly array $metadata = []
+    ) {}
 }
