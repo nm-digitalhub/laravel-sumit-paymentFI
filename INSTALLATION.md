@@ -195,6 +195,80 @@ class PaymentController extends Controller
 
 ### Example 2: E-commerce Integration
 
+**Note:** This example assumes you have an `Order` model in your application. If you don't have one yet, create it first:
+
+#### Creating the Order Model (if needed)
+
+```bash
+php artisan make:model Order -m
+```
+
+Then update `app/Models/Order.php`:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Order extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'total',
+        'status',
+        'transaction_id',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+}
+```
+
+And update the migration file (in `database/migrations/xxxx_create_orders_table.php`):
+
+```php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('orders', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->decimal('total', 10, 2);
+            $table->string('status')->default('pending');
+            $table->unsignedBigInteger('transaction_id')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('orders');
+    }
+};
+```
+
+Then run the migration:
+
+```bash
+php artisan migrate
+```
+
+#### Controller Example
+
 ```php
 <?php
 
@@ -261,6 +335,7 @@ Create a listener in `app/Listeners/SendPaymentConfirmation.php`:
 
 namespace App\Listeners;
 
+use App\Models\Order;
 use Sumit\LaravelPayment\Events\PaymentCompleted;
 use App\Mail\PaymentConfirmationMail;
 use Illuminate\Support\Facades\Mail;
@@ -275,7 +350,7 @@ class SendPaymentConfirmation
         Mail::to($transaction->metadata['customer_email'])
             ->send(new PaymentConfirmationMail($transaction));
             
-        // Update order status
+        // Update order status (if you have an Order model)
         if ($transaction->order_id) {
             Order::find($transaction->order_id)
                 ->update(['status' => 'paid']);
@@ -496,6 +571,34 @@ php artisan config:cache
 $token = PaymentToken::where('user_id', auth()->id())
     ->find($tokenId);
 ```
+
+#### 6. "Class 'Model' not found" or "During inheritance... Model not found"
+
+**Cause:** This error occurs when you create a model (like `Order`) but forget to import the Laravel `Model` class.
+
+**Solution:** Ensure all your application models have the proper import statement at the top:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;  // <-- This import is required
+
+class Order extends Model
+{
+    // Your model code
+}
+```
+
+After fixing the import, refresh the autoloader:
+```bash
+composer dump-autoload
+php artisan config:clear
+php artisan cache:clear
+```
+
+**Note:** The `App\Models\Order` model is NOT part of this package - it's an example model you create in your own application. See "Example 2: E-commerce Integration" above for how to create it properly.
 
 ### Logging
 
